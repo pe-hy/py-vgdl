@@ -13,6 +13,7 @@ sample_games = [
     'chase',
     'frogs',
     'missilecommand',
+    'sokoban',
     'portals',
     'survivezombies',
     'zelda' ]
@@ -28,7 +29,8 @@ classes = {
     'portals':        ['avatar',  'goal', 'portalentry', 'portalexit', 'random',
                        'straight', 'wall' ],
     'survivezombies': ['avatar', 'bee', 'flower', 'hell', 'honey', 'zombie'],
-    'zelda':          ['avatar', 'enemy', 'goal', 'key', 'wall']
+    'zelda':          ['avatar', 'enemy', 'goal', 'key', 'wall'],
+    'sokoban':        ['avatar', 'hole', 'box', 'wall']
 }
 
 # A list of relevant resources for each sample game
@@ -40,7 +42,8 @@ resources = {
     'missilecommand': [],
     'portals':        [],
     'survivezombies': ['honey'],
-    'zelda':          []
+    'zelda':          [],
+    'sokoban':        []
 }
 
 suffixes = {

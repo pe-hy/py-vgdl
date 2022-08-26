@@ -481,8 +481,8 @@ class BasicGame:
         # Completely 2D worlds really just need a block size of 1
         self.block_size = block_size
 
-        for name, value in kwargs.items():
-            print("WARNING: undefined parameter '%s' for game! " % (name))
+        # for name, value in kwargs.items():
+            # print("WARNING: undefined parameter '%s' for game! " % (name))
 
         self.notable_resources: List[str] = []
 
@@ -1019,7 +1019,8 @@ class VGDLSprite:
             try:
                 self.__dict__[name] = value
             except:
-                print("WARNING: undefined parameter '%s' for sprite '%s'! " % (name, self.__class__.__name__))
+                pass
+                # print("WARNING: undefined parameter '%s' for sprite '%s'! " % (name, self.__class__.__name__))
 
         # how many timesteps ago was the last move?
         self.lastmove = 0
