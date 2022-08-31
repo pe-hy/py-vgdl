@@ -345,6 +345,7 @@ class GameState(UserDict):
         self.notable_resources = game.domain.notable_resources
         self.frozen = None
         self.hashed = None
+        self.avatar_name = game.get_avatars()[0].key
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -360,7 +361,9 @@ class GameState(UserDict):
 
     @property
     def avatar_state(self):
-        return self.data['sprites']['avatar'][0]
+        print(self.avatar_name)
+        return self.data['sprites'][self.avatar_name][0]
+
 
     def ended(self):
         return self.data['ended']
