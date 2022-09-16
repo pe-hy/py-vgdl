@@ -167,7 +167,7 @@ class OrientedAvatar(OrientedSprite, MovingAvatar):
 
         if self.lastdirection.length() != 0:
             # Face the direction you moved
-            self.orientation = self.lastdirection #TODO JH
+            self.orientation = self.lastdirection
         else:
             # Make sure orientation is kept
             self.orientation = last_orientation

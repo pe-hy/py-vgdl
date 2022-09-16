@@ -988,7 +988,7 @@ class VGDLSprite:
     physicstype = None  # type: type
     shrinkfactor = 0.
 
-    state_attributes = ['rect', 'alive', 'resources', 'speed','orientation']
+    state_attributes = ['rect', 'alive', 'resources', 'speed']
 
     def __init__(self, key, id, pos, size=(1, 1), color=None, speed=None, cooldown=None, physicstype=None,
                  random_generator=None, **kwargs):

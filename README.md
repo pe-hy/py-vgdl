@@ -9,7 +9,6 @@ Under heavy and active development,
 just check the latest timestamps in the git history.
 
 
-
 ## What is it?
 
 VGDL stands for
