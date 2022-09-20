@@ -15,6 +15,8 @@ vdgym.register_sample_games()
 from itertools import product
 import networkx as nx
 from joblib import Memory
+import imageio
+import os
 
 cachedir = "../cache"
 memory = Memory(cachedir, verbose=0)
@@ -75,12 +77,22 @@ def get_distances(env):
 
     G.remove_nodes_from(map(tuple, coor[grid.flatten() == 1]))
     return shortest_paths_length(G)
+def get_bad_lst(env):
+    temp = []
+    temp_dict = env.game.sprite_registry.stypes # returns all stypes in a dict
+    for k, v in temp_dict.items():
+        e = "enemy"
+        if e in v:
+            temp.append(v[2:])
 
+    ret = [n for ret in temp for n in ret]
+    # Returns a list of all stypes that contain "enemy" in their values.
+    return ret
 
 
 def evaluate_state(env, distances_dict):
     block_size = env.game.block_size
-    bad_lst = ['monsterQuick', 'monsterNormal', 'monsterSlow']
+    bad_lst = get_bad_lst(env)
     avatar_name = env.game.get_avatars()[-1].key
     if avatar_name == 'withkey2':
         sub_goal = 'goal'
@@ -113,9 +125,10 @@ def evaluate_state(env, distances_dict):
 
     return score, min_sub_goal_dist, min_enemy_dist
 
-def visualize_actions(env,action_list, current_state,all_distances):
+def visualize_actions(env, action_list, current_state,all_distances):
     fig, ax = plt.subplots()
     env = gym.make('vgdl_zelda-v0', obs_type="objects")
+
     env.reset()
     env.game.set_game_state(current_state)
     print(len(action_list))
@@ -202,12 +215,44 @@ def compute_plan():
                 finish = True
                 break
     return new_goal.previous_actions,all_distances
+
+def repeat_upsample(rgb_array, k=1, l=1, err=[]):
+    # repeat kinda crashes if k/l are zero
+    if k <= 0 or l <= 0:
+        if not err:
+            print ("Number of repeats must be larger than 0, k: {}, l: {}, returning default array!".format(k, l))
+            err.append('logged')
+        return rgb_array
+
+    # repeat the pixels k times along the y axis and l times along the x axis
+    # if the input image is of shape (m,n,3), the output image will be of shape (k*m, l*n, 3)
+
+    return np.repeat(np.repeat(rgb_array, k, axis=0), l, axis=1)
+def save_gif(env, action_list, current_state, all_distances):
+    env = gym.make('vgdl_zelda-v0', obs_type="objects")
+    env.reset()
+    env.game.set_game_state(current_state)
+    frames = []
+    for j,i in enumerate(action_list):
+        print(j)
+        score, min_subgoal, min_enemy = evaluate_state(env, all_distances)
+        print(min_enemy)
+        if min_enemy < 20:
+            next_obs, reward, done, info = env.step(5)
+        rgb = env.render(mode='rgb_array')
+        frame = repeat_upsample(rgb, 8, 8)
+        frames.append(frame)
+        next_obs, reward, done, info = env.step(i)
+        print(done)
+        print(reward)
+    env.close()
+    imageio.mimwrite(os.path.join('./videos/', 'last_run.gif'), frames, fps=60)
 def main():
 
     #visualize_actions(env, [], first_state_info)
     actions,dst = compute_plan()
-
-    visualize_actions(env,actions, first_state_info,dst)
+    save_gif(env, actions, first_state_info, dst)
+    #visualize_actions(env,actions, first_state_info,dst)
     #plt.show()
 if __name__ == "__main__":
     main()
