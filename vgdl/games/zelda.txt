@@ -7,7 +7,9 @@ BasicGame block_size=10
     movable >
       avatar  > ShootAvatar   stype=sword frameRate=8
         nokey   > img=oryx/swordman1_0
+        withkey1 > img=oryx/swordmankey1_0
         withkey2 > img=oryx/swordmankey1_0
+        withkey3 > img=oryx/swordmankey1_0
       enemy >
         monsterQuick > RandomNPC cooldown=2 cons=6 img=oryx/bat1
         monsterNormal > RandomNPC cooldown=4 cons=8 img=oryx/spider2
@@ -29,11 +31,13 @@ BasicGame block_size=10
   InteractionSet
     movable wall  > stepBack
     #nokey goal    > stepBack
-    goal withkey2  > killSprite scoreChange=1
+    goal withkey3  > killSprite scoreChange=1
     enemy sword > killSprite scoreChange=2
     enemy enemy > stepBack
     avatar enemy > killSprite scoreChange=-1
-    nokey key     > transformTo stype=withkey2
+    withkey2 key > transformTo stype=withkey3
+    withkey1 key >  transformTo stype=withkey2
+    nokey key     > transformTo stype=withkey1
     key  avatar   > killSprite scoreChange=1
 
   TerminationSet

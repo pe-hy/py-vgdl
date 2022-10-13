@@ -1,4 +1,5 @@
 import warnings
+
 warnings.filterwarnings('ignore')
 warnings.simplefilter('ignore')
 import gym
@@ -10,7 +11,8 @@ import matplotlib.pyplot as plt
 import itertools
 import heapq as hq
 from dataclasses import dataclass, field
-from typing import Any,List,Tuple
+from typing import Any, List, Tuple
+
 vdgym.register_sample_games()
 from itertools import product
 import networkx as nx
@@ -20,6 +22,7 @@ import os
 
 cachedir = "../cache"
 memory = Memory(cachedir, verbose=0)
+
 
 def get_sprite_positions(data, env):
     pos_lst = []
@@ -35,7 +38,7 @@ def get_sprite_positions(data, env):
 class Subgoal:
     priority: int
     previous_actions: list
-    info: Any=field(compare=False)
+    info: Any = field(compare=False)
 
 
 class PriorityQueue:
@@ -46,40 +49,44 @@ class PriorityQueue:
         return not self.elements
 
     def put(self, item: Subgoal):
-        hq.heappush(self.elements,item)
+        hq.heappush(self.elements, item)
 
     def get(self) -> Subgoal:
         return hq.heappop(self.elements)
 
-    def merge(self,items: List):
+    def merge(self, items: List):
         for item in items:
-            hq.heappush(self.elements,item)
+            hq.heappush(self.elements, item)
 
-#@memory.cache
+
+# @memory.cache
 def shortest_paths_length(G):
     dic = dict(nx.all_pairs_shortest_path_length(G))
     return dic
 
+
 def get_distances(env):
-    h,w = env.game.height,env.game.width
+    h, w = env.game.height, env.game.width
     bs = env.game.block_size
-    grid = np.zeros((h*bs,w*bs))
+    grid = np.zeros((h * bs, w * bs))
     for w in env.game.get_game_state().data['sprites']['wall']:
-        pos = w['state']['rect'].top,w['state']['rect'].left
-        for i in range(-bs+1,bs):
-            for j in range(-bs+1,bs):
-                x = pos[0]+i
-                y = pos[1]+j
-                if x>=0 and y>=0:
-                    grid[x,y]=1
+        pos = w['state']['rect'].top, w['state']['rect'].left
+        for i in range(-bs + 1, bs):
+            for j in range(-bs + 1, bs):
+                x = pos[0] + i
+                y = pos[1] + j
+                if x >= 0 and y >= 0:
+                    grid[x, y] = 1
     coor = np.array(list(product(*map(range, grid.shape))))
     G = nx.grid_2d_graph(*grid.shape)
 
     G.remove_nodes_from(map(tuple, coor[grid.flatten() == 1]))
     return shortest_paths_length(G)
+
+
 def get_bad_lst(env):
     temp = []
-    temp_dict = env.game.sprite_registry.stypes # returns all stypes in a dict
+    temp_dict = env.game.sprite_registry.stypes  # returns all stypes in a dict
     for k, v in temp_dict.items():
         e = "enemy"
         if e in v:
@@ -90,14 +97,9 @@ def get_bad_lst(env):
     return ret
 
 
-def evaluate_state(env, distances_dict):
+def evaluate_state(env, distances_dict, sub_goal):
     block_size = env.game.block_size
     bad_lst = get_bad_lst(env)
-    avatar_name = env.game.get_avatars()[-1].key
-    if avatar_name == 'withkey2':
-        sub_goal = 'goal'
-    else:
-        sub_goal = 'key'
     bad_pos_lst = []
     pos = env.game.get_game_state().data['sprites'][sub_goal]
     sub_goal_pos_lst = get_sprite_positions(pos, env)
@@ -125,14 +127,15 @@ def evaluate_state(env, distances_dict):
 
     return score, min_sub_goal_dist, min_enemy_dist
 
-def visualize_actions(env, action_list, current_state,all_distances):
+
+def visualize_actions(env, action_list, current_state, all_distances):
     fig, ax = plt.subplots()
     env = gym.make('vgdl_zelda-v0', obs_type="objects")
 
     env.reset()
     env.game.set_game_state(current_state)
     print(len(action_list))
-    for j,i in enumerate(action_list):
+    for j, i in enumerate(action_list):
         print(j)
 
         score, min_subgoal, min_enemy = evaluate_state(env, all_distances)
@@ -148,12 +151,13 @@ def visualize_actions(env, action_list, current_state,all_distances):
         plt.pause(0.01)
     return env
 
+
 env = gym.make('vgdl_zelda-v0', obs_type="objects")
 obs = env.reset()
 first_state_info = env.game.get_game_state()
 
 
-#@memory.cache
+# @memory.cache
 def compute_plan():
     first_state = Subgoal(priority=0, previous_actions=[], \
                           info=first_state_info)
@@ -164,6 +168,8 @@ def compute_plan():
     seen_states = {first_state_info}
     switched = False
     finish = False
+    subgoals = [("key", "withkey1"), ("key", "withkey2"), ("key", "withkey3"), ("goal", None)]
+    avatar_condition = "nokey"
     for i in range(1000):
         if finish:
             break
@@ -192,7 +198,13 @@ def compute_plan():
                 continue
             seen_states.add(new_state)
             actions = current.previous_actions + [i]
-            score, min_subgoal, min_enemy = evaluate_state(env, all_distances)
+            avatar_name = env.game.get_avatars()[-1].key
+            if(avatar_name == subgoals[0][1]):
+                print(len(subgoals))
+                print("#"*10)
+                subgoals.pop()
+            subgoal = subgoals[0][0]
+            score, min_subgoal, min_enemy = evaluate_state(env, all_distances, subgoal)
             if len(env.game.get_avatars()) == 2 and not switched:
                 frontier = PriorityQueue()
                 seen_states = {new_state}
@@ -214,13 +226,14 @@ def compute_plan():
                 print('done', '*' * 20)
                 finish = True
                 break
-    return new_goal.previous_actions,all_distances
+    return new_goal.previous_actions, all_distances
+
 
 def repeat_upsample(rgb_array, k=1, l=1, err=[]):
     # repeat kinda crashes if k/l are zero
     if k <= 0 or l <= 0:
         if not err:
-            print ("Number of repeats must be larger than 0, k: {}, l: {}, returning default array!".format(k, l))
+            print("Number of repeats must be larger than 0, k: {}, l: {}, returning default array!".format(k, l))
             err.append('logged')
         return rgb_array
 
@@ -228,12 +241,14 @@ def repeat_upsample(rgb_array, k=1, l=1, err=[]):
     # if the input image is of shape (m,n,3), the output image will be of shape (k*m, l*n, 3)
 
     return np.repeat(np.repeat(rgb_array, k, axis=0), l, axis=1)
+
+
 def save_gif(env, action_list, current_state, all_distances):
     env = gym.make('vgdl_zelda-v0', obs_type="objects")
     env.reset()
     env.game.set_game_state(current_state)
     frames = []
-    for j,i in enumerate(action_list):
+    for j, i in enumerate(action_list):
         print(j)
         score, min_subgoal, min_enemy = evaluate_state(env, all_distances)
         print(min_enemy)
@@ -247,12 +262,15 @@ def save_gif(env, action_list, current_state, all_distances):
         print(reward)
     env.close()
     imageio.mimwrite(os.path.join('./videos/', 'last_run.gif'), frames, fps=60)
-def main():
 
-    #visualize_actions(env, [], first_state_info)
-    actions,dst = compute_plan()
+
+def main():
+    # visualize_actions(env, [], first_state_info)
+    actions, dst = compute_plan()
     save_gif(env, actions, first_state_info, dst)
-    #visualize_actions(env,actions, first_state_info,dst)
-    #plt.show()
+    # visualize_actions(env,actions, first_state_info,dst)
+    # plt.show()
+
+
 if __name__ == "__main__":
     main()
