@@ -102,10 +102,13 @@ def evaluate_state(env, distances_dict, sub_goal):
     bad_lst = get_bad_lst(env)
     bad_pos_lst = []
     pos = env.game.get_game_state().data['sprites'][sub_goal]
+    pos = filter(lambda x: x["state"].data["alive"], pos)
+    print("pos", pos)
     sub_goal_pos_lst = get_sprite_positions(pos, env)
+    print("subgoal pos list: ", sub_goal_pos_lst)
     rect = env.game.get_avatars()[-1].rect
     agent_pos = rect.top, rect.left
-    print(agent_pos)
+    print("agent_pos: ", agent_pos, "subgoal: ", sub_goal)
     for i in bad_lst:
         pos = env.game.get_game_state().data['sprites'][i]
         bad_pos_lst += get_sprite_positions(pos, env)
@@ -114,12 +117,17 @@ def evaluate_state(env, distances_dict, sub_goal):
         if i in distances_dict[agent_pos]:
             sub_goal_distances.append(distances_dict[agent_pos][i])
     enemy_distances = [40]
+    print("subgoal distances: ", sub_goal_distances)
     for i in bad_pos_lst:
         if i in distances_dict[agent_pos]:
             enemy_distances.append(distances_dict[agent_pos][i])
+    if(len(sub_goal_distances) == 0):
+        min_sub_goal_dist = 0
+    else:
+        min_sub_goal_dist = min(sub_goal_distances)
 
-    min_sub_goal_dist = min(sub_goal_distances)
     min_enemy_dist = min(enemy_distances)
+
     if min_enemy_dist < 15:
         score = 10 ** 6
     else:
@@ -127,35 +135,24 @@ def evaluate_state(env, distances_dict, sub_goal):
 
     return score, min_sub_goal_dist, min_enemy_dist
 
+def get_min_enemy(env, distances_dict):
+    rect = env.game.get_avatars()[-1].rect
+    agent_pos = rect.top, rect.left
+    bad_lst = get_bad_lst(env)
+    bad_pos_lst = []
+    for i in bad_lst:
+        pos = env.game.get_game_state().data['sprites'][i]
+        bad_pos_lst += get_sprite_positions(pos, env)
+    enemy_distances = [40]
+    for i in bad_pos_lst:
+        if i in distances_dict[agent_pos]:
+            enemy_distances.append(distances_dict[agent_pos][i])
 
-def visualize_actions(env, action_list, current_state, all_distances):
-    fig, ax = plt.subplots()
-    env = gym.make('vgdl_zelda-v0', obs_type="objects")
-
-    env.reset()
-    env.game.set_game_state(current_state)
-    print(len(action_list))
-    for j, i in enumerate(action_list):
-        print(j)
-
-        score, min_subgoal, min_enemy = evaluate_state(env, all_distances)
-        print(min_enemy)
-        if min_enemy < 20:
-            next_obs, reward, done, info = env.step(5)
-        next_obs, reward, done, info = env.step(i)
-        print(done)
-        print(reward)
-        a = env.render(mode='rgb_array')
-        ax.cla()
-        ax.imshow(a)
-        plt.pause(0.01)
-    return env
-
+    return min(enemy_distances)
 
 env = gym.make('vgdl_zelda-v0', obs_type="objects")
 obs = env.reset()
 first_state_info = env.game.get_game_state()
-
 
 # @memory.cache
 def compute_plan():
@@ -200,27 +197,25 @@ def compute_plan():
             actions = current.previous_actions + [i]
             avatar_name = env.game.get_avatars()[-1].key
             if(avatar_name == subgoals[0][1]):
-                print(len(subgoals))
-                print("#"*10)
-                subgoals.pop()
-            subgoal = subgoals[0][0]
-            score, min_subgoal, min_enemy = evaluate_state(env, all_distances, subgoal)
-            if len(env.game.get_avatars()) == 2 and not switched:
+                subgoals.pop(0)
                 frontier = PriorityQueue()
                 seen_states = {new_state}
-                switched = True
-                new_goal = Subgoal(score, actions, new_state)
+                new_goal = Subgoal(0, actions, new_state)
                 frontier.put(new_goal)
                 print("*" * 50)
                 break
-            else:
-                print(score, min_subgoal, min_enemy)
-                new_goal = Subgoal(score, actions, new_state)
-                if done:
-                    finish = True
-                    break
-                frontier.put(new_goal)
-                env.game.set_game_state(state)
+
+            subgoal = subgoals[0][0]
+            score, min_subgoal, min_enemy = evaluate_state(env, all_distances, subgoal)
+            print(score, min_subgoal, min_enemy)
+            new_goal = Subgoal(score, actions, new_state)
+            if done:
+                finish = True
+                break
+            frontier.put(new_goal)
+
+            env.game.set_game_state(state)
+
             if env.game.get_game_state().ended():
                 tmp_state = new_goal
                 print('done', '*' * 20)
@@ -250,7 +245,7 @@ def save_gif(env, action_list, current_state, all_distances):
     frames = []
     for j, i in enumerate(action_list):
         print(j)
-        score, min_subgoal, min_enemy = evaluate_state(env, all_distances)
+        min_enemy = get_min_enemy(env, all_distances)
         print(min_enemy)
         if min_enemy < 20:
             next_obs, reward, done, info = env.step(5)
