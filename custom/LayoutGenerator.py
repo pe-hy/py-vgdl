@@ -13,16 +13,23 @@
 
 from __future__ import print_function
 import random
+import networkx as nx
+import matplotlib.pyplot as plt
+import numpy as np
 
 CHARACTER_TILES = {'stone': 'w',
                    'floor': '.',
                    'wall': 'w'}
 
 
+def common_elements(list1, list2):
+    return [element for element in list1 if element in list2]
+
+
 class Generator():
-    def __init__(self, width=22, height=12, max_rooms=4, min_room_xy=4,
-                 max_room_xy=4, rooms_overlap=False, random_connections=1,
-                 random_spurs=3, tiles=CHARACTER_TILES):
+    def __init__(self, width=35, height=20, max_rooms=4, min_room_xy=6,
+                 max_room_xy=6, rooms_overlap=False, random_connections=0,
+                 random_spurs=0, tiles=CHARACTER_TILES):
         self.width = width
         self.height = height
         self.max_rooms = max_rooms
@@ -301,8 +308,59 @@ class Generator():
 
         [print(row) for row in self.tiles_level]
 
+    def get_graph_from_lists(self):
+        G = nx.Graph()
+        for idx, lst in enumerate(self.room_list):
+            G.add_node(idx, coordinates=lst)
+        for idx, lst in enumerate(self.corridor_list):
+            G.add_node(idx+100, coordinates=lst)
+        pos = nx.spring_layout(G)
+        nx.draw_networkx_nodes(G, pos, cmap=plt.get_cmap('jet'), node_size=500)
+        nx.draw_networkx_labels(G, pos)
+        plt.show()
+
+    def neighbours(self):
+        tmp_rooms = self.room_list
+        tmp_coridors = self.corridor_list
+
+    def get_all_points(self):
+        tmp_rooms = self.room_list
+        tmp_coridors = self.corridor_list
+        points_lst_rooms = []
+        points_lst_coridors = []
+        for idx, lst in enumerate(tmp_rooms):
+            x1 = lst[0]
+            y1 = lst[1]
+            w = lst[2]
+            h = lst[3]
+
+            for i in range(w):
+                x = x1+i
+                for j in range(h):
+                    y = y1+j
+                    p = [x, y]
+                    points_lst_rooms.append(p) # w*h * num_of_rooms = num of points
+
+        for idx, lst in enumerate(tmp_coridors):
+            if lst[0][0] == lst[1][0]:
+                for i in range(lst[0][1], lst[1][1]+1, -1 if lst[0][1] > lst[1][1] else 1):
+                    points_lst_coridors.append([lst[0][0], i])
+            else:
+                for i in range(lst[0][0], lst[1][0]+1, -1 if lst[0][0] > lst[1][0] else 1):
+                    points_lst_coridors.append([i, lst[0][1]])
+            if len(lst) > 2:
+                if lst[1][0] == lst[2][0]:
+                    for i in range(lst[1][1]+1, lst[2][1] + 1, -1 if lst[1][1] > lst[2][1] else 1):
+                        points_lst_coridors.append([lst[1][0], i])
+                else:
+                    for i in range(lst[1][0]+1, lst[2][0] + 1, -1 if lst[1][0] > lst[2][0] else 1):
+                        points_lst_coridors.append([i, lst[1][1]])
+        print(common_elements(points_lst_coridors, points_lst_rooms))
+
 
 if __name__ == '__main__':
     gen = Generator()
     gen.gen_level()
     gen.gen_tiles_level()
+    gen.get_all_points()
+    gen.get_graph_from_lists()
