@@ -1,4 +1,5 @@
-#! /usr/bin/env python
+# %%
+# ! /usr/bin/env python
 # coding: utf-8
 
 # generator-1.py, a simple python dungeon generator by
@@ -19,11 +20,25 @@ import numpy as np
 
 CHARACTER_TILES = {'stone': 'w',
                    'floor': '.',
-                   'wall': 'w'}
+                   'wall': 'w',
+                   "corr": 'C'}
 
 
 def common_elements(list1, list2):
-    return [element for element in list1 if element in list2]
+    ret = []
+    for idx, lst in enumerate(list1):
+        for idx2, lst2 in enumerate(list2):
+            if lst == lst2:
+                ret.append(lst)
+                break
+
+    return ret
+
+
+def remove_duplicates(lst):
+    res = []
+    [res.append(x) for x in lst if x not in res]
+    return res
 
 
 class Generator():
@@ -250,7 +265,7 @@ class Generator():
             for width in range(abs(x1 - x2) + 1):
                 for height in range(abs(y1 - y2) + 1):
                     self.level[min(y1, y2) + height][
-                        min(x1, x2) + width] = 'floor'
+                        min(x1, x2) + width] = 'corr'
 
             if len(corridor) == 3:
                 x3, y3 = corridor[2]
@@ -258,7 +273,7 @@ class Generator():
                 for width in range(abs(x2 - x3) + 1):
                     for height in range(abs(y2 - y3) + 1):
                         self.level[min(y2, y3) + height][
-                            min(x2, x3) + width] = 'floor'
+                            min(x2, x3) + width] = 'corr'
 
         # paint the walls
         for row in range(1, self.height - 1):
@@ -300,6 +315,8 @@ class Generator():
                     tmp_tiles.append(self.tiles['floor'])
                 if col == 'wall':
                     tmp_tiles.append(self.tiles['wall'])
+                if col == "corr":
+                    tmp_tiles.append(self.tiles['corr'])
 
             self.tiles_level.append(''.join(tmp_tiles))
 
@@ -308,59 +325,133 @@ class Generator():
 
         [print(row) for row in self.tiles_level]
 
+    def get_room_and_corridor_by_intersection(self, coord):
+        x2 = coord[0]
+        y2 = coord[1]
+        room_coord = []
+        corridor_coord = []
+        for idx, lst in enumerate(self.room_list):
+            x = lst[0] - 1
+            y = lst[1] - 1
+            w = lst[2] + 1
+            h = lst[3] + 1  # +1/-1 expands the room because corrdiors end one point before rooms
+
+            room_points = self.get_points_from_coord(x, y, w, h)
+            if (coord in room_points):
+                room_coord.append((x + 1, y + 1))
+
+        for idx, lst in enumerate(self.corridor_list):
+            x = lst[0][0]
+            y = lst[0][1]
+            x2 = lst[1][0]
+            y2 = lst[1][1]
+            w = x2 - x
+            h = y2 - y
+
+            corridor_points = self.get_points_from_coord(x, y, w, h)
+            if (coord in corridor_points):
+                corridor_coord.append((x, y))
+
+            if len(lst) > 2:
+                x = lst[1][0]
+                y = lst[1][1]
+                x2 = lst[2][0]
+                y2 = lst[2][1]
+                w = x2 - x
+                h = y2 - y
+
+                corridor_points = self.get_points_from_coord(x, y, w, h)
+                if (coord in corridor_points):
+                    corridor_coord.append((lst[0][0], lst[0][1]))
+
+        return (room_coord, corridor_coord)
+
     def get_graph_from_lists(self):
         G = nx.Graph()
+        room_dict = {}
+        corridor_dict = {}
         for idx, lst in enumerate(self.room_list):
             G.add_node(idx, coordinates=lst)
+            room_dict[(lst[0], lst[1])] = idx
         for idx, lst in enumerate(self.corridor_list):
-            G.add_node(idx+100, coordinates=lst)
-        pos = nx.spring_layout(G)
-        nx.draw_networkx_nodes(G, pos, cmap=plt.get_cmap('jet'), node_size=500)
-        nx.draw_networkx_labels(G, pos)
+            G.add_node(idx + 100, coordinates=lst)
+            corridor_dict[(lst[0][0], lst[0][1])] = idx + 100
+
+        intersection_lst, tmp_room_list_after_expansion, points_lst_rooms, points_lst_coridors = gen.get_all_points()
+
+        for idx, lst in enumerate(intersection_lst):
+            coords = self.get_room_and_corridor_by_intersection(lst)
+            for idx, a in enumerate(coords[0]):
+                for idx, b in enumerate(coords[1]):
+                    room_idx = room_dict[a]
+                    corridor_idx = corridor_dict[b]
+
+                    G.add_edge(room_idx, corridor_idx, intersection=lst)
+                    print(room_idx, corridor_idx, lst)
+
+        nx.draw_networkx(G, with_labels=True, cmap=plt.get_cmap('jet'), node_size=700)
         plt.show()
 
-    def neighbours(self):
-        tmp_rooms = self.room_list
-        tmp_coridors = self.corridor_list
+    def get_points_from_coord(self, x, y, w, h):
+        ret = []
+
+        x2 = x + w
+        y2 = y + h
+        step_x = 1 if x2 > x else -1
+        step_y = 1 if y2 > y else -1
+
+        for y_ in range(y, y2 + step_y, step_y):
+
+            for x_ in range(x, x2 + step_x, step_x):
+                ret.append([x_, y_])
+
+        return ret
 
     def get_all_points(self):
-        tmp_rooms = self.room_list
-        tmp_coridors = self.corridor_list
         points_lst_rooms = []
         points_lst_coridors = []
-        for idx, lst in enumerate(tmp_rooms):
-            x1 = lst[0]
-            y1 = lst[1]
-            w = lst[2]
-            h = lst[3]
+        tmp_room_list_after_expansion = []
+        for idx, lst in enumerate(self.room_list):
+            x = lst[0] - 1
+            y = lst[1] - 1
+            w = lst[2] + 1
+            h = lst[3] + 1  # +1/-1 expands the room because corrdiors end one point before rooms
+            tmp_room_list_after_expansion.append([x, y, w, h])
+            points_lst_rooms.extend(self.get_points_from_coord(x, y, w, h))
 
-            for i in range(w):
-                x = x1+i
-                for j in range(h):
-                    y = y1+j
-                    p = [x, y]
-                    points_lst_rooms.append(p) # w*h * num_of_rooms = num of points
+        for idx, lst in enumerate(self.corridor_list):
+            x = lst[0][0]
+            y = lst[0][1]
+            x2 = lst[1][0]
+            y2 = lst[1][1]
+            w = x2 - x
+            h = y2 - y
 
-        for idx, lst in enumerate(tmp_coridors):
-            if lst[0][0] == lst[1][0]:
-                for i in range(lst[0][1], lst[1][1]+1, -1 if lst[0][1] > lst[1][1] else 1):
-                    points_lst_coridors.append([lst[0][0], i])
-            else:
-                for i in range(lst[0][0], lst[1][0]+1, -1 if lst[0][0] > lst[1][0] else 1):
-                    points_lst_coridors.append([i, lst[0][1]])
+            points_lst_coridors.extend(self.get_points_from_coord(x, y, w, h))
+
             if len(lst) > 2:
-                if lst[1][0] == lst[2][0]:
-                    for i in range(lst[1][1]+1, lst[2][1] + 1, -1 if lst[1][1] > lst[2][1] else 1):
-                        points_lst_coridors.append([lst[1][0], i])
-                else:
-                    for i in range(lst[1][0]+1, lst[2][0] + 1, -1 if lst[1][0] > lst[2][0] else 1):
-                        points_lst_coridors.append([i, lst[1][1]])
-        print(common_elements(points_lst_coridors, points_lst_rooms))
+                x = lst[1][0]
+                y = lst[1][1]
+                x2 = lst[2][0]
+                y2 = lst[2][1]
+                w = x2 - x
+                h = y2 - y
+
+                del points_lst_coridors[-1]
+                points_lst_coridors.extend(self.get_points_from_coord(x, y, w, h))
+
+        print("room points", len(points_lst_rooms), points_lst_rooms)
+        print("corridor points", len(points_lst_coridors), points_lst_coridors)
+        tmp = common_elements(points_lst_coridors, points_lst_rooms)
+        print("common points", len(tmp), tmp)
+        return common_elements(points_lst_coridors,
+                               points_lst_rooms), tmp_room_list_after_expansion, points_lst_rooms, points_lst_coridors
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     gen = Generator()
     gen.gen_level()
     gen.gen_tiles_level()
-    gen.get_all_points()
     gen.get_graph_from_lists()
+
+# %%
