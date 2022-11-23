@@ -337,7 +337,7 @@ class Generator():
             h = lst[3] + 1  # +1/-1 expands the room because corrdiors end one point before rooms
 
             room_points = self.get_points_from_coord(x, y, w, h)
-            if (coord in room_points):
+            if coord in room_points:
                 room_coord.append((x + 1, y + 1))
 
         for idx, lst in enumerate(self.corridor_list):
@@ -349,7 +349,7 @@ class Generator():
             h = y2 - y
 
             corridor_points = self.get_points_from_coord(x, y, w, h)
-            if (coord in corridor_points):
+            if coord in corridor_points:
                 corridor_coord.append((x, y))
 
             if len(lst) > 2:
@@ -453,5 +453,3 @@ if __name__ == "__main__":
     gen.gen_level()
     gen.gen_tiles_level()
     gen.get_graph_from_lists()
-
-# %%
