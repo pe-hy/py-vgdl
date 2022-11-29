@@ -42,7 +42,7 @@ def remove_duplicates(lst):
 
 
 class Generator():
-    def __init__(self, width=35, height=20, max_rooms=4, min_room_xy=6,
+    def __init__(self, width=50, height=15, max_rooms=4, min_room_xy=6,
                  max_room_xy=6, rooms_overlap=False, random_connections=0,
                  random_spurs=0, tiles=CHARACTER_TILES):
         self.width = width
@@ -82,10 +82,10 @@ class Generator():
             # is greater than the other's maximum in
             # that dimension.
 
-            if (x < (current_room[0] + current_room[2]) and
-                    current_room[0] < (x + w) and
-                    y < (current_room[1] + current_room[3]) and
-                    current_room[1] < (y + h)):
+            if (x <= (current_room[0] + current_room[2]) and
+                    current_room[0] <= (x + w) and
+                    y <= (current_room[1] + current_room[3]) and
+                    current_room[1] <= (y + h)):
                 return True
 
         return False
