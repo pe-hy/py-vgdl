@@ -510,6 +510,7 @@ def get_edges_from_skels(crossing_edges, groups_to_connect, skels, vertices_edge
         edge_points = set(edge_points).union(set(get_path_border(edge_points)))
         skip = False
         if edge_points is None:
+            skip = True
             break
         for i, edge in enumerate(crossed_edges):
             if edge == None:
