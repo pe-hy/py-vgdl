@@ -90,6 +90,23 @@ def create_string(walkable, grid_size):
         string += "\n"
     return string
 
+def create_string_with_atoms(walkable, grid_size, atoms):
+    atoms_pos_lst = []
+    for key in atoms:
+        for pair in atoms[key]:
+            tuple = pair[1]
+            atoms_pos_lst.append(toL(tuple))
+    string = ""
+    for i in range(grid_size):
+        for j in range(grid_size):
+            if (i, j) in atoms_pos_lst:
+                string += "x"
+            elif (i, j) in walkable:
+                string += " "
+            else:
+                string += "w"
+        string += "\n"
+    return string
 
 def toG(y, x):
     return y - 1, x - 1
@@ -490,6 +507,7 @@ def get_crossing_edges(skels, groups_to_connect, vertices_edges_dict_inv, vertic
     crossing_edges = [edge for edge in crossing_edges if edge in vertices_edges_dict.keys()]
     return crossing_edges
 
+
 def get_edges_from_skels(crossing_edges, groups_to_connect, skels, vertices_edges_dict_inv, room_G, paths_lst,
                          vertices_edges_dict, crossed_edges):
     i, j = groups_to_connect
@@ -512,6 +530,7 @@ def get_edges_from_skels(crossing_edges, groups_to_connect, skels, vertices_edge
         if edge_points is None:
             break
         for i, edge in enumerate(crossed_edges):
+            edge = edge[0]
             if edge == None:
                 skip = True
                 break
@@ -548,6 +567,19 @@ def get_layout_str(walkable_points, skels, crossing_edges, paths_lst, grid_size)
     return string
 
 
+def get_layout_str_with_atoms(walkable_points, skels, crossing_edges, paths_lst, grid_size, atom_placements):
+    edges = []
+    for s in skels:
+        edges += list(s['edges'])
+    edges += crossing_edges
+    walkable_points_all = list(walkable_points)
+    for ix in edges:
+        walkable_points_all += list(map(toL, paths_lst[ix][1]))
+    walkable_points_all = set(walkable_points_all)
+    string = create_string_with_atoms(walkable_points_all, grid_size, atom_placements)
+    return string
+
+
 def get_crossing_edges_list(skels, room_G, groups_to_connect, paths_lst):
     vertices_edges_dict = nx.get_edge_attributes(room_G, 'corridor_key')
     vertices_edges_dict_inv = {v: k for k, v in vertices_edges_dict.items()}
@@ -556,6 +588,6 @@ def get_crossing_edges_list(skels, room_G, groups_to_connect, paths_lst):
         possible_cr_edges = get_crossing_edges(skels, grs, vertices_edges_dict_inv, vertices_edges_dict)
         crossing_edge = get_edges_from_skels(possible_cr_edges, grs, skels, vertices_edges_dict_inv, room_G, paths_lst,
                                              vertices_edges_dict, crossing_edges)
-        crossing_edges.append(crossing_edge)
+        crossing_edges.append((crossing_edge, grs))
     print(crossing_edges)
     return crossing_edges
