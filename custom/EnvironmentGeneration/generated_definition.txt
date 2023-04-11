@@ -1,0 +1,80 @@
+BasicGame block_size=10
+  SpriteSet
+    background > Immovable randomtiling=0.9 img=oryx/floor3 hidden=True
+    avatar > MovingAvatar img=oryx/knight1
+    wall > Immovable autotiling=true img=oryx/wall3
+    movable > 
+       0  > Passive img=atom_sprites/belt1.png
+       100128  > Passive img=atom_sprites/book1.png
+       10053  > Passive img=atom_sprites/bookDown.png
+       6  > Passive img=atom_sprites/bookUp.png
+       11  > Passive img=atom_sprites/boots1.png
+       10061  > Passive img=atom_sprites/bow1.png
+       14  > Passive img=atom_sprites/bullet1.png
+       10063  > Passive img=atom_sprites/candle1.png
+       100144  > Passive img=atom_sprites/cape1.png
+       17  > Passive img=atom_sprites/cloak1.png
+       18  > Passive img=atom_sprites/diamond1.png
+       10003  > Passive img=atom_sprites/eye1.png
+       100148  > Passive img=atom_sprites/goldsack.png
+       100146  > Passive img=atom_sprites/heart1.png
+       10005  > Passive img=atom_sprites/helmet1.png
+       19  > Passive img=atom_sprites/key1.png
+       10065  > Passive img=atom_sprites/mace1.png
+    obstacle > 
+       101148  > Immovable img=obstacle_sprites/barrel1.png
+       11005  > Immovable img=obstacle_sprites/barrel2.png
+       11065  > Immovable img=obstacle_sprites/block1.png
+
+  LevelMapping
+    A > background avatar
+    w > wall
+    . > background
+    α > background 0
+    η > background 6
+    μ > background 11
+    ο > background 14
+    ς > background 17
+    σ > background 18
+    χ > background 10003
+    τ > background 19
+    ψ > background 10005
+    ҡ > background 101148
+    Ѧ > background 100128
+    ѭ > background 100144
+    Ѯ > background 100146
+    ѯ > background 100148
+    Ы > background 11065
+    Ͻ > background 10053
+    Ё > background 10061
+    Ђ > background 10063
+    Ѓ > background 10065
+    Ц > background 11005
+
+  InteractionSet
+    avatar wall > stepBack
+    movable avatar > bounceForward
+    movable wall > stepBack
+    avatar obstacle > stepBack
+    14 18 > createSprite stype="10003"
+    6 10003 > createSprite stype="100144"
+    0 100144 > createSprite stype="100148"
+    0 10003 > createSprite stype="100146"
+    100146 6 > createSprite stype="100148"
+    0 6 > createSprite stype="100128"
+    100128 10003 > createSprite stype="100148"
+    11 17 > createSprite stype="10005"
+    17 19 > createSprite stype="10061"
+    14 10061 > createSprite stype="10065"
+    14 19 > createSprite stype="10063"
+    10063 17 > createSprite stype="10065"
+    14 17 > createSprite stype="10053"
+    10053 19 > createSprite stype="10065"
+    100148 101148 > killBoth
+    10005 11005 > killBoth
+    10065 11065 > killBoth
+    movable obstacle > stepBack
+
+  TerminationSet
+    MultiSpriteCounter stype="100148" limit=1 win=True
+    Timeout limit=20000 win=False
