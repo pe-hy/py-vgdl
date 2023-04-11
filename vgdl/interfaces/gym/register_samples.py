@@ -16,7 +16,8 @@ sample_games = [
     'sokoban',
     'portals',
     'survivezombies',
-    'zelda' ]
+    'zelda',
+    'gdefinition',]
 
 # A list of relevant classes for each sample game
 classes = {
@@ -30,7 +31,8 @@ classes = {
                        'straight', 'wall' ],
     'survivezombies': ['avatar', 'bee', 'flower', 'hell', 'honey', 'zombie'],
     'zelda':          ['avatar', 'enemy', 'goal', 'key', 'wall'],
-    'sokoban':        ['avatar', 'hole', 'box', 'wall']
+    'sokoban':        ['avatar', 'hole', 'box', 'wall'],
+    'gdefinition':    ['avatar']
 }
 
 # A list of relevant resources for each sample game
@@ -43,7 +45,8 @@ resources = {
     'portals':        [],
     'survivezombies': ['honey'],
     'zelda':          [],
-    'sokoban':        []
+    'sokoban':        [],
+    'gdefinition':    []
 }
 
 suffixes = {

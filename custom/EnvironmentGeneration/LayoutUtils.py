@@ -1,5 +1,7 @@
 import random
 import itertools
+from collections import defaultdict
+
 import networkx as nx
 import numpy as np
 from scipy.spatial.distance import cdist
@@ -92,7 +94,7 @@ def create_string(walkable, grid_size):
 
 
 def create_string_with_atoms(walkable, grid_size, atoms, obstacles,
-                             atom_obstacles_dict):  # tady poslat atomy a obstacle a dicty IDček které korespondují
+                             atom_obstacles_dict, agent_pos):  # tady poslat atomy a obstacle a dicty IDček které korespondují
     atoms_pos_lst = []
     for key in atoms:
         for pair in atoms[key]:
@@ -108,8 +110,10 @@ def create_string_with_atoms(walkable, grid_size, atoms, obstacles,
                     flag = True
             if flag:
                 continue
-            if (i, j) in walkable:
-                string += " "
+            if (i, j) == agent_pos:
+                string += "A"
+            elif (i, j) in walkable:
+                string += "."
             else:
                 string += "w"
         string += "\n"
@@ -576,7 +580,7 @@ def get_layout_str(walkable_points, skels, crossing_edges, paths_lst, grid_size)
 
 
 def get_layout_str_with_atoms(walkable_points, skels, crossing_edges, paths_lst, grid_size, atom_placements, obstacles,
-                              atom_obstacle_dict):
+                              atom_obstacle_dict, agent_pos):
     edges = []
     for s in skels:
         edges += list(s['edges'])
@@ -585,7 +589,7 @@ def get_layout_str_with_atoms(walkable_points, skels, crossing_edges, paths_lst,
     for ix in edges:
         walkable_points_all += list(map(toL, paths_lst[ix][1]))
     walkable_points_all = set(walkable_points_all)
-    string = create_string_with_atoms(walkable_points_all, grid_size, atom_placements, obstacles, atom_obstacle_dict)
+    string = create_string_with_atoms(walkable_points_all, grid_size, atom_placements, obstacles, atom_obstacle_dict, agent_pos)
     return string
 
 
@@ -600,3 +604,192 @@ def get_crossing_edges_list(skels, room_G, groups_to_connect, paths_lst):
         crossing_edges.append((crossing_edge, grs))
     print(crossing_edges)
     return crossing_edges
+
+
+def load_parse_molecules(molecules_G):
+    node_data = molecules_G["layout_spec"].nodes(data=True)
+    edge_data = molecules_G["layout_spec"].edges(data=True)
+    print(node_data)
+    print(edge_data)
+    node_data = dict(node_data)
+    group_id_room_number = {}
+
+    for i, data in node_data.items():
+        group_id_room_number[i] = 2 if len(data['data']) == 1 else len(data['data'])
+
+    group_sizes = list(group_id_room_number.values())
+    num_rooms = sum(group_sizes)
+    group_ids = [k for k, v in node_data.items()]
+    groups_to_connect = [(edge[0], edge[1]) for edge in edge_data]
+
+    obstacles = {}
+    for tuple_ in edge_data:
+        obstacles[tuple_[2]['obstacle_id']] = (tuple_[0], tuple_[1])
+    obstacles = {key: value for key, value in obstacles.items()}
+
+    return node_data, num_rooms, group_sizes, group_ids, groups_to_connect, obstacles
+
+
+def intersect_first_group(corridor_id, groups, room_G, skels, paths_lst):
+    group1 = groups[0]
+    group2 = groups[1]
+    rooms, corridor_points = paths_lst[corridor_id]
+    rooms_points = [get_points_from_room(i, room_G) for i in rooms]
+    rooms_points = [tuple for sublist in rooms_points for tuple in sublist]
+    rooms_points = set(rooms_points)
+    corridor_points = set(corridor_points)
+    corridor_points = corridor_points.difference(set(rooms_points))
+    vertices_edges_dict = nx.get_edge_attributes(room_G, 'corridor_key')
+    vertices_edges_dict_inv = {v: k for k, v in vertices_edges_dict.items()}
+    group1_points = get_points_from_group(group1, skels, vertices_edges_dict_inv, room_G, paths_lst)
+    group2_points = get_points_from_group(group2, skels, vertices_edges_dict_inv, room_G, paths_lst)
+    intersect_1 = group1_points.intersection(corridor_points)
+    intersect_2 = group2_points.intersection(corridor_points)
+    assert not (len(intersect_1) != 0 and len(intersect_2) != 0)
+    return len(intersect_1) != 0
+
+
+def get_rooms_from_skels(skels, vertices_edges_dict):
+    result = {}
+    for i, d in enumerate(skels):
+        rooms = []
+        for v in vertices_edges_dict.items():
+            if v[1] in d['edges']:
+                rooms.append(v[0])
+        result[i] = rooms
+    return result
+
+def get_agent_pos(groups_rooms_points, molecules_G):
+    initial_group = len(molecules_G["molecules"]) - 1
+    possible_points = []
+    rooms = groups_rooms_points[initial_group]
+    for _, points in rooms:
+        for p in points:
+            possible_points.append(p)
+    return toL(random.choice(possible_points))
+
+
+def get_room_ids_for_group(skels_rooms_dict):
+    ret = {}
+    for k, v in skels_rooms_dict.items():
+        temp = []
+        for i in v:
+            temp += list(i)
+        ret[k] = set(temp)
+    return ret
+
+
+def get_obstacle_room(corridor_id, groups, room_G, skels, paths_lst, room_ids_from_node_data):
+    intersect = intersect_first_group(corridor_id, groups, room_G, skels, paths_lst)
+    room1 = paths_lst[corridor_id][0][0]
+    room2 = paths_lst[corridor_id][0][1]
+    r1_in_g1 = room1 in room_ids_from_node_data[groups[0]]
+    if r1_in_g1:
+        rooms = [room1, room2]
+    else:
+        rooms = [room2, room1]
+    if intersect:
+        obstacle_room = rooms[1]
+    else:
+        obstacle_room = rooms[0]
+    return obstacle_room
+
+
+def get_line_around_room(path):
+    border = []
+    for p in path:
+        border += get_neighs(p)
+    surrounding_nodes = list(set(border) - set(path))
+    return surrounding_nodes
+
+
+def get_obstacle_pos(room_id, corridor_id, paths_lst, room_G):
+    room_points = get_points_from_room(room_id, room_G)
+    corridor_points = paths_lst[corridor_id][1]
+    room_points = set(room_points)
+    corridor_points = set(corridor_points)
+    assert len(corridor_points.intersection(room_points)) != 0
+    corridor_points = corridor_points.difference(room_points)
+    room_border = set(get_line_around_room(room_points))
+    obstacle_pos = list(room_border.intersection(corridor_points))
+    assert len(obstacle_pos) == 1
+    return obstacle_pos[0]
+
+
+def get_room_points_from_node_data(room_ids_from_node_data, room_G):
+    room_points = defaultdict(list)
+    for k, v in room_ids_from_node_data.items():
+        for room_id in v:
+            room_points[k].append((room_id, get_points_from_room(room_id, room_G)))
+    return room_points
+
+
+def get_atom_placements(groups_rooms_points, node_data, obstacles):
+    result = defaultdict(list)
+    for k, v in node_data.items():
+        idx_g = k
+        for i, data in enumerate(v["data"]):
+            used_points = []
+            for idx, coords in obstacles:
+                used_points.append(coords)
+            room_points = groups_rooms_points[k][i][1]
+            for symbol_id in data:
+                while True:
+                    sampled_point = random.sample(room_points, 1)[0]
+                    if sampled_point not in used_points:
+                        result[groups_rooms_points[k][i][0]].append((symbol_id, sampled_point, k))
+                        used_points.append(sampled_point)
+                        print(used_points)
+                        break
+                    # Vrací dict listů, kde klíč je ID roomky, value je list tuplů kde prvním prvkem je id atomu a druhým prvkem je (tuple) pozice umístění atomu v roomce.
+                    # 1: [('8', (8, 13)), ('7', (9, 14))]
+
+    return result
+
+
+def get_obstacle_id_and_pos(crossing_edges, room_G, skels, paths_lst, room_ids_from_node_data, obstacle_ids):
+    obstacles = []
+    for c_e in crossing_edges:
+        idx = c_e[0]
+        groups = c_e[1]
+        print(groups)
+        ob_room = get_obstacle_room(idx, groups, room_G, skels, paths_lst, room_ids_from_node_data)
+        ob_pos = get_obstacle_pos(ob_room, idx, paths_lst, room_G)
+        ob_pos = toL(ob_pos)
+        group_list = []
+        for k, v in obstacle_ids.items():
+            group_list.append(groups)
+            if v in group_list:
+                ob_id = k
+        obstacles.append((ob_id, ob_pos))
+    return obstacles
+
+
+def get_atom_obstacle_ids_and_positions(atoms, obstacles, obstacle_dic):
+    atoms_pos_lst = []
+    obstacles_new = []
+    for o in obstacles:
+        obstacle = (obstacle_dic[o[0]], o[1])
+        obstacles_new.append(obstacle)
+    for key in atoms:
+        for pair in atoms[key]:
+            tuple = pair[1]
+            idx = int(pair[0])
+            tol = toL(tuple)
+            atoms_pos_lst.append((idx, tol))
+    merged_list = obstacles_new + atoms_pos_lst
+    all_pos_dic = {v: k for k, v in merged_list}
+    if len(merged_list) != len(all_pos_dic):
+        print("some atoms/obstacles have same placements")
+        print(len(merged_list))
+        print(merged_list)
+        print(len(all_pos_dic))
+        print(all_pos_dic)
+    return all_pos_dic
+
+
+def convert_to_ascii(all_pos_dic, symbol_mappings):
+    new_all_pos_dic = {}
+    for k, v in all_pos_dic.items():
+        new_all_pos_dic[k] = symbol_mappings[v]
+    return new_all_pos_dic

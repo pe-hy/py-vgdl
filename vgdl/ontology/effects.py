@@ -17,11 +17,24 @@ from .constants import *
 def killSprite(sprite, partner, game):
     """ Kill command """
     game.kill_sprite(sprite)
+    print("killSprite: ", sprite)
 
 def killBoth(sprite, partner, game):
     """ Kill command """
     game.kill_sprite(sprite)
     game.kill_sprite(partner)
+    print("killBoth: ", sprite, partner)
+
+def createSprite(sprite, partner, game, stype):
+    """ Kills both sprites and creates a new one"""
+    from vgdl.ontology.sprites import OrientedSprite
+    game.kill_sprite(sprite)
+    game.kill_sprite(partner)
+    new_sprite = game.create_sprite(stype, sprite.rect.topleft)
+    assert new_sprite, 'This really was not supposed to happen, cannot recover'
+    if isinstance(sprite, OrientedSprite) and isinstance(new_sprite, OrientedSprite):
+        new_sprite.orientation = sprite.orientation
+    print("createSprite: ", sprite, partner, new_sprite)
 
 def cloneSprite(sprite, partner, game):
     game.create_sprite(sprite.name, (sprite.rect.left, sprite.rect.top))

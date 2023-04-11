@@ -30,9 +30,9 @@ class VGDLEnv(gym.Env):
 
         # Load game description and level description
         if game_file is not None:
-            with open (game_file, "r") as myfile:
+            with open (game_file, "r", encoding="utf-8") as myfile:
                 game_desc = myfile.read()
-            with open (level_file, "r") as myfile:
+            with open (level_file, "r", encoding="utf-8") as myfile:
                 level_desc = myfile.read()
             self.level_name = os.path.basename(level_file).split('.')[0]
             self.loadGame(game_desc, level_desc)

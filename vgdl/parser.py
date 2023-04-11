@@ -87,6 +87,7 @@ class VGDLParser:
             if c.content == "InteractionSet":
                 self.parse_interactions(c.children)
             if c.content == "LevelMapping":
+                print(c.children)
                 self.parse_mappings(c.children)
             if c.content == "TerminationSet":
                 self.parse_terminations(c.children)
@@ -163,6 +164,7 @@ class VGDLParser:
     def parse_mappings(self, mnodes):
         for mn in mnodes:
             c, val = [x.strip() for x in mn.content.split(">")]
+            print(c)
             assert len(c) == 1, "Only single character mappings allowed."
             # a char can map to multiple sprites
             keys = [x.strip() for x in val.split(" ") if len(x) > 0]

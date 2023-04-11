@@ -20,7 +20,7 @@ BasicGame block_size=10
   LevelMapping
     . > background
     g > background goal
-    + > background key
+    k > background key
     A > background nokey
     1 > background monsterQuick
     2 > background monsterNormal

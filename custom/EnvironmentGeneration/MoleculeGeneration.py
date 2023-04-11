@@ -153,7 +153,7 @@ def generateInstanceData(mols):
 def get_spliting_edges(instance):
     edges = defaultdict(list)
     for i, m in enumerate(instance):
-        if m['edge'] == None:
+        if m['edge'] is None:
             continue
         else:
             edges[m['obstacle_G_ix']].append(m['edge'])
