@@ -602,15 +602,12 @@ def get_crossing_edges_list(skels, room_G, groups_to_connect, paths_lst):
         crossing_edge = get_edges_from_skels(possible_cr_edges, grs, skels, vertices_edges_dict_inv, room_G, paths_lst,
                                              vertices_edges_dict, crossing_edges)
         crossing_edges.append((crossing_edge, grs))
-    print(crossing_edges)
     return crossing_edges
 
 
 def load_parse_molecules(molecules_G):
     node_data = molecules_G["layout_spec"].nodes(data=True)
     edge_data = molecules_G["layout_spec"].edges(data=True)
-    print(node_data)
-    print(edge_data)
     node_data = dict(node_data)
     group_id_room_number = {}
 
@@ -739,7 +736,6 @@ def get_atom_placements(groups_rooms_points, node_data, obstacles):
                     if sampled_point not in used_points:
                         result[groups_rooms_points[k][i][0]].append((symbol_id, sampled_point, k))
                         used_points.append(sampled_point)
-                        print(used_points)
                         break
                     # Vrací dict listů, kde klíč je ID roomky, value je list tuplů kde prvním prvkem je id atomu a druhým prvkem je (tuple) pozice umístění atomu v roomce.
                     # 1: [('8', (8, 13)), ('7', (9, 14))]
@@ -752,7 +748,6 @@ def get_obstacle_id_and_pos(crossing_edges, room_G, skels, paths_lst, room_ids_f
     for c_e in crossing_edges:
         idx = c_e[0]
         groups = c_e[1]
-        print(groups)
         ob_room = get_obstacle_room(idx, groups, room_G, skels, paths_lst, room_ids_from_node_data)
         ob_pos = get_obstacle_pos(ob_room, idx, paths_lst, room_G)
         ob_pos = toL(ob_pos)

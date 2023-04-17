@@ -3,7 +3,7 @@ BasicGame block_size=10
     background > Immovable randomtiling=0.9 img=oryx/floor3 hidden=True
     avatar > MovingAvatar img=oryx/knight1
     wall > Immovable autotiling=true img=oryx/wall3
-    movable >
+    movable > 
        0  > Passive img=atom_sprites/belt1.png
        3  > Passive img=atom_sprites/book1.png
        11  > Passive img=atom_sprites/bookDown.png
@@ -23,7 +23,7 @@ BasicGame block_size=10
        10072  > Passive img=atom_sprites/mace1.png
        10074  > Passive img=atom_sprites/mineral1.png
        10075  > Passive img=atom_sprites/orb1.png
-    obstacle >
+    obstacle > 
        101032  > Immovable img=obstacle_sprites/barrel1.png
        11020  > Immovable img=obstacle_sprites/barrel2.png
        101036  > Immovable img=obstacle_sprites/block1.png

@@ -1,6 +1,5 @@
 import networkx as nx
 import random as rnd
-import collections
 from collections import defaultdict
 
 

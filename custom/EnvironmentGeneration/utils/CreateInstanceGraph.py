@@ -3,7 +3,7 @@ from collections import defaultdict
 
 import networkx as nx
 
-from custom.EnvironmentGeneration.MoleculeGeneration import get_blocks, flatten, split_node, merge_block
+from custom.EnvironmentGeneration.utils.MoleculeGeneration import get_blocks, flatten, split_node, merge_block
 
 
 def merge_parents(G, parents, node):
