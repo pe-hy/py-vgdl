@@ -2,13 +2,13 @@
 
 ### This implementation of an environment generator is the practical part of my Diploma thesis titled "Abstraction Discovery In Reinforcement Learning". To run the algorithm, make sure you have all the necessary libraries specified in requirements.txt.
 
-To run the algorithm, run the notebooks in the following order:
-1. GraphGeneratorMolecules.ipynb
-2. Definition.ipynb
-3. SymbolMapper.ipynb
-4. LayoutGenerator.ipynb and DefinitionGenerator.ipynb
+To run the algorithm, run the in the following files in the following order:
+1. problem_generator.py
+  - this generates problem instances (data to be fed to layout and game definition generators - run this once)
+2. EnvironmentGenerator.ipynb
+  - this generates the environment instance based on the selected problem (MOL_IDX) and some other parameters (number of layouts, their sizes, etc.)
 
-This will produce two files: generated_layout.txt, generated_definition.txt.
+This will produce these files: generated_layout.txt, generated_definition.txt. The number of layouts generated can be changed in EnvironmentGenerator.ipynb. only one generated_definition.txt file is necessary per selected problem (molecule) index.
 
 The contents of these two files can then be used to replace existing gdefinition.txt and gdefinition_lvl0.txt in vgdl/games folder. Finally, run the instance with the module vgdl.util.humanplay.play_vgdl in your respective IDE, with the parameters set to "vgdl/games/gdefinition_lvl0.txt"
 
