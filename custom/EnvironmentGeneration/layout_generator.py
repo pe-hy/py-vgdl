@@ -73,10 +73,10 @@ def generate_layout(graph_instances_lst, instances_num, MOL_IDX, num_columns, gr
 
         crossing_edge_this = [c_e[0] for c_e in crossing_edges]
         agent_pos = get_agent_pos(groups_rooms_points, molecules_G)
-
+        print(agent_pos)
         layout = get_layout_str_with_atoms(walkable_points, skels, crossing_edge_this, paths_lst, grid_size,
                                            atom_placements, obstacles, atom_obstacles_dict_converted, agent_pos)
-        instances_folder = "generated"
+        instances_folder = "layouts"
         if not os.path.exists(instances_folder):
             os.makedirs(instances_folder)
 
