@@ -1,6 +1,6 @@
-from custom.EnvironmentGeneration.utils.MoleculeGeneration import *
-from custom.EnvironmentGeneration.utils.CreateInstanceGraph import get_instance_graph
-from custom.EnvironmentGeneration.utils.DefinitionUtils import *
+from utils.MoleculeGeneration import *
+from utils.CreateInstanceGraph import get_instance_graph
+from utils.DefinitionUtils import *
 import pickle
 
 # GraphGeneratorMolecules

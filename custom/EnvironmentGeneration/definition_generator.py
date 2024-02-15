@@ -1,4 +1,4 @@
-from custom.EnvironmentGeneration.utils.DefinitionGeneratorUtils import *
+from utils.DefinitionGeneratorUtils import *
 from os import listdir
 from os.path import isfile, join
 import pickle

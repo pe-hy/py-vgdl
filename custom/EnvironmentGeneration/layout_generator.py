@@ -1,5 +1,5 @@
 import os
-from custom.EnvironmentGeneration.utils.LayoutUtils import *
+from utils.LayoutUtils import *
 import pickle
 
 def generate_layout(graph_instances_lst, instances_num, MOL_IDX, num_columns, grid_size, min_room_size):
