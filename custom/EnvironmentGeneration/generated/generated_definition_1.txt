@@ -1,0 +1,59 @@
+BasicGame block_size=10
+  SpriteSet
+    background > Immovable randomtiling=0.9 img=oryx/floor3 hidden=True
+    avatar > MovingAvatar img=oryx/knight1
+    wall > Immovable autotiling=true img=oryx/wall3
+    movable > 
+       0  > Passive img=atom_sprites/belt1.png
+       3  > Passive img=atom_sprites/book1.png
+       100036  > Passive img=atom_sprites/bookDown.png
+       9  > Passive img=atom_sprites/bookUp.png
+       11  > Passive img=atom_sprites/boots1.png
+       15  > Passive img=atom_sprites/bow1.png
+       10034  > Passive img=atom_sprites/bullet1.png
+       10070  > Passive img=atom_sprites/candle1.png
+       10072  > Passive img=atom_sprites/cape1.png
+       10074  > Passive img=atom_sprites/cloak1.png
+       10075  > Passive img=atom_sprites/diamond1.png
+    obstacle > 
+       11034  > Immovable img=obstacle_sprites/barrel1.png
+       101036  > Immovable img=obstacle_sprites/barrel2.png
+
+  LevelMapping
+    A > background avatar
+    w > wall
+    . > background
+    α > background 0
+    δ > background 3
+    ё > background 100036
+    κ > background 9
+    μ > background 11
+    Ғ > background 101036
+    π > background 15
+    ϵ > background 10034
+    Ѕ > background 10070
+    І > background 10072
+    е > background 11034
+    Ј > background 10075
+    Ї > background 10074
+
+  InteractionSet
+    avatar wall > stepBack
+    movable avatar > bounceForward
+    movable wall > stepBack
+    avatar obstacle > stepBack
+    3 9 > createSprite stype="10034"
+    3 15 > createSprite stype="10070"
+    0 10070 > createSprite stype="10075"
+    0 15 > createSprite stype="10072"
+    10072 3 > createSprite stype="10075"
+    0 3 > createSprite stype="10074"
+    10074 15 > createSprite stype="10075"
+    11 10075 > createSprite stype="100036"
+    10034 11034 > killBoth
+    100036 101036 > killBoth
+    movable obstacle > stepBack
+
+  TerminationSet
+    MultiSpriteCounter stype="10034" limit=1 win=True
+    Timeout limit=20000 win=False
